@@ -10,9 +10,9 @@ class AStarPlanner(object):
         self.expanded_nodes = [] 
         self.open = heapdict.heapdict()
         self.close = heapdict.heapdict()
+        self.parent = [None for _ in range(num_squares)]
 
         num_squares = (planning_env.x_limit[-1]+1)*(planning_env.y_limit[-1]+1)
-        self.parent = [None for _ in range(num_squares)]
         self.g = [None for _ in range(num_squares)]
         self.h = [None for _ in range(num_squares)]
         
@@ -26,14 +26,23 @@ class AStarPlanner(object):
 
         # TODO: Task 4.3
         start_state = self.planning_env.start
-        self.open[start_state] = self.planning_env.compute_heuristic(start_state)
+        #open[state] = (state, g, h)
+        self.open[start_state] = (start_state, 0, self.planning_env.compute_heursitic())
 
         while self.open:
-            (current_state, priority) = self.open.popitem()
-            self.close[current_state] = priority
-            for neighbour in self.get_neighbours(current_state):
-                #YADA YADA FINISH THIS!
-                pass
+
+            (current_state, g, h) = self.open.popitem()
+            self.close[current_state] = (current_state, g, h)
+
+            if current_state == self.planning_env.goal:
+                plan = self.get_plan()
+                return np.array(plan)
+
+            for neighbour_state in self.get_neighbours(current_state):
+                self.parent[neighbour_state] = current_state
+                new_g = g + self.planning_env(current_state, neighbour_state)
+                
+                if (neighbour_state is not in self.open)
 
         return np.array(plan)
 
@@ -44,6 +53,15 @@ class AStarPlanner(object):
 
         # used for visualizing the expanded nodes
         return self.expanded_nodes
+
+    def get_plan(self):
+        raise NotImplementedError()
+
+    def cost_until_now(self, state):
+        cost = 0
+        while self.parent[state] is not None:
+
+
 
 
     #IMPLEMENTED

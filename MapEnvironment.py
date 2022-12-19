@@ -121,17 +121,13 @@ class MapEnvironment(object):
 
         # In this case, the cost to come is simple, and can be expressed as g = 1
         # h can safely be expressed as the Manhattan Distance between the new state and the goal state.
-
-        g = self.compute_distance(NEED INITIAL STATE HOWWW, state) ##ASK DEAN
         
         vector = self.goal - state
         h =  vector[0] + vector[1]
 
-        epsilon = float(input())
+        epsilon = 1 # 1 for vanilla A*, and the algorithm get's greedier as we increase epsilon
 
-        f = g + epsilon*h
-
-        return f
+        return epsilon*h
 
 
     # ------------------------#
