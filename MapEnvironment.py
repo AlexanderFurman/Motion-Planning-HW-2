@@ -113,7 +113,26 @@ class MapEnvironment(object):
 
         # TODO: Task 4.3
 
-        pass
+        # We define our heuristic as f = g + epsilon*h, where f is a measure of the 'cost-to-come' to
+        # a new state, where as h is a measure of the 'cost to go' (as in to reach the final state)
+
+        # Note that it is important that our heuristics are admissible, as in they do not overestimate
+        # the true 'cost-to-go' or 'cost-to-come'.
+
+        # In this case, the cost to come is simple, and can be expressed as g = 1
+        # h can safely be expressed as the Manhattan Distance between the new state and the goal state.
+
+        g = self.compute_distance(NEED INITIAL STATE HOWWW, state) ##ASK DEAN
+        
+        vector = self.goal - state
+        h =  vector[0] + vector[1]
+
+        epsilon = float(input())
+
+        f = g + epsilon*h
+
+        return f
+
 
     # ------------------------#
     # Visualization Functions
