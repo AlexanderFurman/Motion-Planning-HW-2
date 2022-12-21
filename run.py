@@ -12,7 +12,10 @@ if __name__ == "__main__":
     parser.add_argument('-ext_mode', '--ext_mode', type=str, default='E1', help='edge extension mode for RRT and RRTStar')
     parser.add_argument('-goal_prob', '--goal_prob', type=float, default=0.05, help='probability to draw goal vertex for RRT and RRTStar')
     parser.add_argument('-k', '--k', type=int, default=1, help='number of nearest neighbours for RRTStar')
-    args = parser.parse_args()
+    # args = parser.parse_args()
+    
+    args, unknown = parser.parse_known_args()
+    print(f"the following are the arguments that have been parsed:\n {args}\nThe following are the unknowns:\n{unknown}")
 
     # prepare the map
     planning_env = MapEnvironment(json_file=args.map)
