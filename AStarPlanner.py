@@ -1,6 +1,7 @@
 import numpy as np
 from heapdict import heapdict 
 
+
 class AStarPlanner(object):    
     def __init__(self, planning_env):
         self.planning_env = planning_env
@@ -8,11 +9,12 @@ class AStarPlanner(object):
         # used for visualizing the expanded nodes
         # make sure that this structure will contain a list of positions (states, numpy arrays) without duplicates
         self.expanded_nodes = [] 
-        self.open = {}
-        self.close = {}
+        self.open = heapdict()
+        self.close = heapdict()
         # num_squares = (planning_env.xlimit[-1]+1)*(planning_env.ylimit[-1]+1)
         # self.parent = [None for _ in range(num_squares)]
         self.parent = {}
+        self.g = {}
         self.epsilon = 20
         # self.g = [None for _ in range(num_squares)]
         # self.h = [None for _ in range(num_squares)]
@@ -30,22 +32,28 @@ class AStarPlanner(object):
 
         # TODO: Task 4.3
         start_state = self.planning_env.start
-        self.open[tuple(start_state)] = (start_state, 0, self.get_h(start_state))
+        self.g[tuple(start_state)] = 0
+        self.open[tuple(start_state)] = self.heuristic(0, self.get_h(start_state))
+        # print(f"OPEN {self.open[tuple(start_state)]}")
 
         while self.open:
 
             # test = self.open.popitem()
             # print(f"test = {test}")
 
-            # _, (current_state, g, h) = self.open.popitem()
-            (current_state, g, h) = self.pop_min(self.open)
-            print(f"current state, g, h = {(current_state, g, h)}")
+            current_state, heuristic = self.open.popitem()
+            current_state = np.array(current_state)
+            # print(f"current_state = {current_state}")
+            # print(f"heuristic = {heuristic}")
+            # (current_state, heuristic) = self.pop_min(self.open)
+            # print(f"current state, g, h = {(current_state, g, h)}")
 
 
             #add current state to the list of expanded nodes for the visualization
             self.expanded_nodes.append(current_state)
 
-            self.close[tuple(current_state)] = (current_state, g, h)
+            self.close[tuple(current_state)] = heuristic
+            # print(self.close[tuple(current_state)])
 
             if np.array_equal(current_state, self.planning_env.goal):
                 print("reached here")
@@ -54,47 +62,37 @@ class AStarPlanner(object):
                 return np.array(plan)
 
             for neighbour_state in self.get_neighbours(current_state):
-                print(f"neighbour state = {neighbour_state}")
+                # print(f"neighbour state = {neighbour_state}")
                 # self.parent[tuple(neighbour_state)] = current_state
-                new_g = g + self.planning_env.compute_distance(current_state, neighbour_state)
+                new_g = self.g[tuple(current_state)] + self.planning_env.compute_distance(current_state, neighbour_state)
                 
                 if (tuple(neighbour_state) not in self.open) and (tuple(neighbour_state) not in self.close):
+                    # print(f"neighbour_state {neighbour_state} is unvisited")
                     self.parent[tuple(neighbour_state)] = current_state
-                    self.open[tuple(neighbour_state)] = (neighbour_state, new_g, self.get_h(neighbour_state))
+                    self.g[tuple(neighbour_state)] = new_g
+                    # print(f"HEURISTIC = {self.heuristic(new_g, self.get_h(neighbour_state))}")
+                    self.open[tuple(neighbour_state)] = self.heuristic(new_g, self.get_h(neighbour_state))
 
                 elif (tuple(neighbour_state) in self.open):
-                    g_neighbour = self.open[tuple(neighbour_state)][1]
-                    h_neighbour = self.open[tuple(neighbour_state)][2]
-                    if self.heuristic(new_g, h_neighbour) < self.heuristic(g_neighbour, h_neighbour):
-                        # self.parent.pop(tuple(neighbour_state))
+                    # print(f"neighbour_state {neighbour_state} in open")
+                    current_heuristic = self.open[tuple(neighbour_state)]
+                    if self.heuristic(new_g, self.get_h(neighbour_state)) < current_heuristic: #change this to just compare g's if still too slow
                         self.parent[tuple(neighbour_state)] = current_state
-                        # self.open.pop(tuple(neighbour_state))
-                        self.open[tuple(neighbour_state)] = (neighbour_state, new_g, h_neighbour)
+                        self.open.pop(tuple(neighbour_state))
+                        self.g[tuple(neighbour_state)] = new_g
+                        self.open[tuple(neighbour_state)] = self.heuristic(new_g, self.get_h(neighbour_state))
                 
                 else: #neighbour in closed
-                    g_neighbour = self.close[tuple(neighbour_state)][1]
-                    h_neighbour = self.close[tuple(neighbour_state)][2]
-                    if self.heuristic(new_g, h_neighbour) < self.heuristic(g_neighbour, h_neighbour):
+                    current_heuristic = self.close[tuple(neighbour_state)]
+                    # print(f"neighbour_state {neighbour_state} in closed")
+                    if self.heuristic(new_g, self.get_h(neighbour_state)) < current_heuristic: #change this to just compare g's if still too slow
                         self.parent[tuple(neighbour_state)] = current_state
                         self.close.pop(tuple(neighbour_state))
-                        self.open[tuple(neighbour_state)] = (neighbour_state, new_g, h_neighbour)
+                        self.g[tuple(neighbour_state)] = new_g
+                        self.close[tuple(neighbour_state)] = self.heuristic(new_g, self.get_h(neighbour_state))
 
         print("No solution found")
         return False
-
-    def pop_min(self, state_dictionary):
-        min_entry = None
-        min_heuristic = np.inf
-
-        for state_tuple in state_dictionary:
-            g = state_dictionary[state_tuple][1]
-            h = state_dictionary[state_tuple][2]
-            heuristic = self.heuristic(g, h)
-            if heuristic < min_heuristic:
-                min_heuristic = heuristic
-                min_entry = state_tuple
-
-        return state_dictionary.pop(min_entry)
 
     def get_expanded_nodes(self):
         '''
@@ -108,7 +106,7 @@ class AStarPlanner(object):
         plan = []
         current_state = self.planning_env.goal
 
-        while current_state is not self.planning_env.start:
+        while not np.array_equal(current_state, self.planning_env.start):
 
             plan.append(current_state)
             current_state = self.parent[tuple(current_state)]
