@@ -38,6 +38,8 @@ class AStarPlanner(object):
 
             if np.array_equal(current_state, self.planning_env.goal):
                 print("goal found")
+                print(f"nodes expanded = {len(self.expanded_nodes)}")
+                print(f"cost = {self.g[tuple(current_state)]}")
                 plan = self.get_plan()
                 return np.array(plan)
 
