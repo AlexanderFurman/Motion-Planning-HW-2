@@ -36,7 +36,7 @@ class RRTPlanner(object):
         x_range=self.planning_env.xlimit
         y_range = self.planning_env.ylimit
         #sample state:
-        for i in range(300): #number of iterations
+        for i in range(2000): #number of iterations
             if (np.random.uniform(0, 1) < self.goal_prob): #bias goal
                 #take target as sample
                 a=self.planning_env.goal[0]
@@ -47,8 +47,8 @@ class RRTPlanner(object):
             new_state=np.array([a,b])
             x_near=self.tree.get_nearest_state(new_state)
             x_ext=self.extend(x_near[1],new_state)
-            if x_near[1][0] <0:
-                a=88
+            if np.isnan(x_ext[0]): #same node
+                continue
             ans2=MapEnvironment.edge_validity_checker(self.planning_env,x_near[1],x_ext)
             if ans2:
                 x_new_idx=self.tree.add_vertex(x_ext)
@@ -123,7 +123,7 @@ class RRTPlanner(object):
         @param rand_state The sampled position.
         '''
         # TODO: Task 4.4
-        step_size=1
+        step_size=10
         if self.ext_mode=='E1':
             return rand_state
         step_dir = np.array(rand_state) - np.array(near_state)
